@@ -73,8 +73,8 @@ pmd {
 
 mainClassName = "com.intel.databackend.Application"
 sourceCompatibility = 1.8
-ext.cdhVersion = "cdh5.5.1"
-ext.hbaseVersion = "1.0.0-$cdhVersion"
+ext.cdhVersion = "cdh5.13.1"
+ext.hbaseVersion = "1.2.0-$cdhVersion"
 ext.hadoopVersion = "2.6.0-$cdhVersion"
 
 
@@ -136,12 +136,13 @@ dependencies {
      jar file can be found here:
      https://repository.cloudera.com/artifactory/repo/org/apache/kafka/kafka-clients/
      */
-    compile("org.apache.kafka:kafka_2.10:0.8.2.0-kafka-1.4.0") {
+    compile("org.apache.kafka:kafka_2.11:0.10.2-kafka-2.2.0") {
         exclude group: "org.apache.zookeeper", module: "zookeeper"
     }
-    compile("org.apache.kafka:kafka-clients:0.8.2.0-kafka-1.4.0")
-     /* check the required version in kafka_2.10:0.8.2.0-kafka-1.4.0 pom.xml*/
-    compile("com.101tec:zkclient:0.3") {
+    compile("org.apache.kafka:kafka-clients:0.10.2-kafka-2.2.0")
+     /* check the required version in kafka_2.11:0.10.2-kafka-2.2.0 pom.xml
+        https://repository.cloudera.com/cloudera/cloudera-repos/org/apache/kafka/kafka_2.11/0.10.2-kafka-2.2.0/ */
+    compile("com.101tec:zkclient:0.10") {
         exclude group: "org.apache.zookeeper", module: "zookeeper"
     }
     
