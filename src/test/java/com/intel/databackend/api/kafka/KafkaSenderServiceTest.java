@@ -23,6 +23,7 @@ import kafka.admin.AdminUtils;
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.exception.ZkException;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import kafka.utils.ZkUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,6 +48,9 @@ public class KafkaSenderServiceTest {
     ZkClient zkClient;
 
     @Mock
+    ZkUtils zkUtils;
+
+    @Mock
     private ServiceConfigProvider serviceConfigProvider;
 
     @Mock
@@ -58,12 +62,12 @@ public class KafkaSenderServiceTest {
     @Before
     public void initMocks() throws Exception {
         MockitoAnnotations.initMocks(this);
-
-        PowerMockito.whenNew(ZkClient.class).withAnyArguments().thenReturn(zkClient);
+	PowerMockito.whenNew(ZkClient.class).withAnyArguments().thenReturn(zkClient);
+        PowerMockito.whenNew(ZkUtils.class).withAnyArguments().thenReturn(zkUtils);
         Mockito.doNothing().when(zkClient).close();
 
         PowerMockito.mockStatic(AdminUtils.class);
-        Mockito.when(AdminUtils.topicExists(zkClient, TOPIC)).thenReturn(true);
+        Mockito.when(AdminUtils.topicExists(zkUtils, TOPIC)).thenReturn(true);
 
         Mockito.when(serviceConfigProvider.getKafkaTopicName()).thenReturn(TOPIC);
         Mockito.when(serviceConfigProvider.getKafkaPartitionsFactor()).thenReturn(1);
@@ -87,7 +91,7 @@ public class KafkaSenderServiceTest {
 
     @Test
     public void testCreateTopic_topic_not_exist() throws VcapEnvironmentException {
-        Mockito.when(AdminUtils.topicExists(zkClient, TOPIC)).thenReturn(false);
+        Mockito.when(AdminUtils.topicExists(zkUtils, TOPIC)).thenReturn(false);
         kafkaSenderService.createTopic();
         kafkaSenderService.close();
         Mockito.verify(kafkaProducer).close();
@@ -97,7 +101,7 @@ public class KafkaSenderServiceTest {
 
     @Test
     public void testCreateTopic_error_handling() throws Exception {
-        Mockito.when(AdminUtils.topicExists(zkClient, TOPIC)).thenThrow(new ZkException());
+        Mockito.when(AdminUtils.topicExists(zkUtils, TOPIC)).thenThrow(new ZkException());
         kafkaSenderService.createTopic();
         kafkaSenderService.close();
         Mockito.verifyNoMoreInteractions(kafkaProducer);
