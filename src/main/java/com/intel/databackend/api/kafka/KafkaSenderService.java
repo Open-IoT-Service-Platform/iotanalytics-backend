@@ -19,12 +19,16 @@ import com.intel.databackend.config.ServiceConfigProvider;
 import com.intel.databackend.datastructures.Observation;
 import com.intel.databackend.exceptions.VcapEnvironmentException;
 import kafka.admin.AdminUtils;
+import kafka.admin.RackAwareMode;
+import kafka.admin.RackAwareMode.Safe$;
 import kafka.utils.ZKStringSerializer$;
 import org.I0Itec.zkclient.ZkClient;
+import org.I0Itec.zkclient.ZkConnection;
 import org.I0Itec.zkclient.exception.ZkException;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import kafka.utils.ZkUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +61,7 @@ public class KafkaSenderService implements KafkaService {
         if (kafkaProducer != null) {
             ZkClient zkClient = null;
             String brokerURI = null;
+	    ZkUtils zkUtils = null;
             try {
                 topic = serviceConfigProvider.getKafkaTopicName();
                 Integer partitions = serviceConfigProvider.getKafkaPartitionsFactor();
@@ -64,10 +69,16 @@ public class KafkaSenderService implements KafkaService {
                 Integer timeoutInMs = serviceConfigProvider.getKafkaTimeoutInMs();
                 brokerURI = serviceConfigProvider.getZookeeperUri();
                 zkClient = new ZkClient(brokerURI, timeoutInMs, timeoutInMs, ZKStringSerializer$.MODULE$);
+		// Security for Kafka was added in Kafka 0.9.0.0
+       		boolean isSecureKafkaCluster = false;
+       		// ZkUtils for Kafka was used in Kafka 0.9.0.0 for the AdminUtils API
+       		zkUtils = new ZkUtils(zkClient, new ZkConnection(brokerURI), isSecureKafkaCluster);
 
-                if (!AdminUtils.topicExists(zkClient, topic)) {
-                    logger.info("Topic: {} does not exist. Creating...", topic);
-                    AdminUtils.createTopic(zkClient, topic, partitions, replicationFactor, new Properties());
+
+                if (!AdminUtils.topicExists(zkUtils, topic)) {
+                    logger.error("Topic: {} does not exist. Creating...", topic);
+		    RackAwareMode rackAwareMode = Safe$.MODULE$;
+                    AdminUtils.createTopic(zkUtils, topic, partitions, replicationFactor, new Properties(), rackAwareMode);
                 } else {
                     logger.info("Topic: {} exist and will be use for pushing messages", topic);
                 }
