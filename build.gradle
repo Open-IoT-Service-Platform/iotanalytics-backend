@@ -17,9 +17,6 @@
 group = 'com.intel'
 
 buildscript {
-    ext {
-        springBootVersion = '1.5.9.RELEASE'
-    }
     repositories {
         mavenLocal()
         maven { url "https://repository.cloudera.com/artifactory/cloudera-repos/" }
@@ -30,17 +27,16 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.3.RELEASE")
         classpath("com.google.guava:guava:18.0")
         classpath("com.palantir:jacoco-coverage:0.3.0")
     }
 }
 
-apply plugin: 'application'
 apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
-apply plugin: 'org.springframework.boot'
+apply plugin: 'spring-boot'
 apply plugin: 'project-report'
 
 apply plugin: 'checkstyle'
@@ -48,7 +44,6 @@ apply plugin: 'pmd'
 
 apply plugin: 'jacoco'
 apply plugin: 'com.palantir.jacoco-coverage'
-apply plugin: 'com.palantir.jacoco-full-report'
 
 jacoco {
     toolVersion = "0.7.6.201602180812"
@@ -73,16 +68,16 @@ pmd {
 
 mainClassName = "com.intel.databackend.Application"
 sourceCompatibility = 1.8
-ext.cdhVersion = "cdh5.13.1"
-ext.hbaseVersion = "1.2.0-$cdhVersion"
+ext.cdhVersion = "cdh5.5.1"
+ext.hbaseVersion = "1.0.0-$cdhVersion"
 ext.hadoopVersion = "2.6.0-$cdhVersion"
 
 
 jar {
     baseName 'databackend'
-    manifest { 
-        attributes "Main-Class": "$mainClassName"
-    } 
+    manifest {
+        attributes 'Main-Class': 'com.intel.databackend.Application'
+    }
 }
 
 allprojects {
@@ -109,14 +104,14 @@ configurations {
     compile.exclude module: "slf4j-log4j12"
     compile.exclude group: "org.eclipse.jetty.websocket"
     compile.exclude group: "javax.servlet", module: "servlet-api"
-    compile.exclude group: "ch.qos.logback"
 }
 
 
 dependencies {
-    compile("org.springframework.boot:spring-boot-starter-web") 
-    compile("org.springframework.boot:spring-boot-starter-jetty")
-    compile("org.springframework.boot:spring-boot-starter-log4j2")
+    compile("org.springframework.boot:spring-boot-starter-web:1.2.5.RELEASE")
+
+    compile("org.springframework.boot:spring-boot-starter-jetty:1.2.5.RELEASE")
+    compile("org.springframework.boot:spring-boot-starter-log4j:1.2.5.RELEASE")
 
     compile("org.apache.hbase:hbase:$hbaseVersion")
     compile("org.apache.hbase:hbase-client:$hbaseVersion")
@@ -136,13 +131,12 @@ dependencies {
      jar file can be found here:
      https://repository.cloudera.com/artifactory/repo/org/apache/kafka/kafka-clients/
      */
-    compile("org.apache.kafka:kafka_2.11:0.10.2-kafka-2.2.0") {
+    compile("org.apache.kafka:kafka_2.10:0.8.2.0-kafka-1.4.0") {
         exclude group: "org.apache.zookeeper", module: "zookeeper"
     }
-    compile("org.apache.kafka:kafka-clients:0.10.2-kafka-2.2.0")
-     /* check the required version in kafka_2.11:0.10.2-kafka-2.2.0 pom.xml
-        https://repository.cloudera.com/cloudera/cloudera-repos/org/apache/kafka/kafka_2.11/0.10.2-kafka-2.2.0/ */
-    compile("com.101tec:zkclient:0.10") {
+    compile("org.apache.kafka:kafka-clients:0.8.2.0-kafka-1.4.0")
+     /* check the required version in kafka_2.10:0.8.2.0-kafka-1.4.0 pom.xml*/
+    compile("com.101tec:zkclient:0.3") {
         exclude group: "org.apache.zookeeper", module: "zookeeper"
     }
     
