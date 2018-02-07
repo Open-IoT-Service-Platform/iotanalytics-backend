@@ -44,6 +44,7 @@ apply plugin: 'pmd'
 
 apply plugin: 'jacoco'
 apply plugin: 'com.palantir.jacoco-coverage'
+apply plugin: 'com.palantir.jacoco-full-report'
 
 jacoco {
     toolVersion = "0.7.6.201602180812"
