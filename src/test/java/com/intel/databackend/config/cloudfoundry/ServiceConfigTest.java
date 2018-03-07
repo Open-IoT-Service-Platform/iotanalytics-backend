@@ -17,6 +17,7 @@
 package com.intel.databackend.config.cloudfoundry;
 
 import com.intel.databackend.config.cloudfoundry.utils.VcapReader;
+import com.intel.databackend.datasources.hbase.KerberosProperties;
 import com.intel.databackend.exceptions.VcapEnvironmentException;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -89,4 +90,66 @@ public class ServiceConfigTest {
         serviceConfig.init();
         serviceConfig.getKafkaUri();
     }
+
+    @Test
+    public void Invoke_isKafkaEnabled() throws  Exception {
+        Mockito.when(vcapReaderServices.getUserProvidedServiceCredentialsByName(ServiceConfig.KAFKA_UPS_NAME))
+                .thenReturn(new JSONObject("{" + ServiceConfig.KAFKA_UPS_ENABLED+ ": " + true + "}"));
+        serviceConfig.init();
+        Assert.assertEquals(true, serviceConfig.isKafkaEnabled());
+    }
+
+    @Test
+    public void Invoke_getKafkaPartitionsFactor()throws Exception{
+        int partitions = 3;
+        Mockito.when(vcapReaderServices.getUserProvidedServiceCredentialsByName(ServiceConfig.KAFKA_UPS_NAME))
+                .thenReturn(new JSONObject("{" + ServiceConfig.KAFKA_UPS_PARTITIONS+ ": " + partitions + "}"));
+        serviceConfig.init();
+        Assert.assertEquals(new Integer(partitions) , serviceConfig.getKafkaPartitionsFactor());
+    }
+
+    @Test
+    public void Invoke_getKafkaReplicationFactor() throws  Exception{
+        int replication = 3;
+        Mockito.when(vcapReaderServices.getUserProvidedServiceCredentialsByName(ServiceConfig.KAFKA_UPS_NAME))
+                .thenReturn(new JSONObject("{" + ServiceConfig.KAFKA_UPS_REPLICATION + ": " + replication + "}"));
+        serviceConfig.init();
+        Assert.assertEquals(new Integer(replication), serviceConfig.getKafkaReplicationFactor());
+    }
+
+    @Test
+    public void Invoke_getKafkaTimeoutInMs() throws Exception{
+        int timeout = 3;
+        Mockito.when(vcapReaderServices.getUserProvidedServiceCredentialsByName(ServiceConfig.KAFKA_UPS_NAME))
+                .thenReturn(new JSONObject("{" + ServiceConfig.KAFKA_UPS_TIMEOUT_MS+ ": " + timeout + "}"));
+        serviceConfig.init();
+        Assert.assertEquals( new Integer(timeout), serviceConfig.getKafkaTimeoutInMs());
+    }
+
+    @Test
+    public void Invoke_getKerberosCredentials() throws Exception{
+        String krb_kdc = "kdc";
+        String krb_pass = "pass";
+        String krb_realm= "realm";
+        String krb_user= "user";
+        Mockito.when(vcapReaderServices.getVcapServiceCredentialsByType(ServiceConfig.KERBEROS_SERVICE_NAME))
+                .thenReturn(new JSONObject("{" + ServiceConfig.KRB_KDC+ ": " + krb_kdc + ","
+                        + ServiceConfig.KRB_PASS + ":"+ krb_pass+"," + ServiceConfig.KRB_REALM + ":" + krb_realm + ","
+                        + ServiceConfig.KRB_USER + ":" + krb_user + "}"));
+
+        KerberosProperties kerberosProperties = new KerberosProperties();
+        kerberosProperties.setRealm(krb_realm);
+        kerberosProperties.setPassword(krb_pass);
+        kerberosProperties.setUser(krb_user);
+        kerberosProperties.setKdc(krb_kdc);
+
+        serviceConfig.init();
+
+        Assert.assertEquals(kerberosProperties.getKdc(), serviceConfig.getKerberosCredentials().getKdc());
+        Assert.assertEquals(kerberosProperties.getPassword(), serviceConfig.getKerberosCredentials().getPassword());
+        Assert.assertEquals(kerberosProperties.getUser(), serviceConfig.getKerberosCredentials().getUser());
+        Assert.assertEquals(kerberosProperties.getRealm(), serviceConfig.getKerberosCredentials().getRealm());
+    }
+
+
 }
