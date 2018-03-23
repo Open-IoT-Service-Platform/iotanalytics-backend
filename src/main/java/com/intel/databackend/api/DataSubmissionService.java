@@ -27,6 +27,8 @@ import org.springframework.context.annotation.Scope;
 
 import static org.springframework.context.annotation.ScopedProxyMode.TARGET_CLASS;
 import static org.springframework.web.context.WebApplicationContext.SCOPE_REQUEST;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @org.springframework.stereotype.Service
 @Scope(value = SCOPE_REQUEST, proxyMode = TARGET_CLASS)
@@ -38,6 +40,7 @@ public class DataSubmissionService implements Service<DataSubmissionRequest, Dat
     private DataDao dataDao;
     private KafkaService kafkaService;
 
+    private static final Logger logger = LoggerFactory.getLogger(DataSubmissionService.class);
     @Autowired
     public DataSubmissionService(DataDao dataDao, KafkaService kafkaService) {
         this.dataDao = dataDao;
@@ -53,6 +56,7 @@ public class DataSubmissionService implements Service<DataSubmissionRequest, Dat
 
     @Override
     public DataSubmissionResponse invoke() throws MissingDataSubmissionArgumentException {
+        logger.error("=============DataSubmissionResponse");
         if (request.getData() == null) {
             throw new MissingDataSubmissionArgumentException("Missing \"data\" field in request");
         }

@@ -55,7 +55,7 @@ jacoco {
 }
 
 jacocoCoverage {
-    reportThreshold  0.43, LINE
+    reportThreshold  0.4, LINE
 }
 
 checkstyle {

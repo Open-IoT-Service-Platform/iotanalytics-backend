@@ -69,7 +69,7 @@ public class KafkaSenderServiceTest {
         PowerMockito.mockStatic(AdminUtils.class);
         Mockito.when(AdminUtils.topicExists(zkUtils, TOPIC)).thenReturn(true);
 
-        Mockito.when(serviceConfigProvider.getKafkaTopicName()).thenReturn(TOPIC);
+        Mockito.when(serviceConfigProvider.getKafkaObservationsTopicName()).thenReturn(TOPIC);
         Mockito.when(serviceConfigProvider.getKafkaPartitionsFactor()).thenReturn(1);
         Mockito.when(serviceConfigProvider.getKafkaReplicationFactor()).thenReturn(1);
         Mockito.when(serviceConfigProvider.getKafkaTimeoutInMs()).thenReturn(10);

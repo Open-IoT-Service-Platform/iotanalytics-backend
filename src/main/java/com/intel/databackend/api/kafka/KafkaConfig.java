@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 
 @Configuration
@@ -54,11 +55,27 @@ public class KafkaConfig {
                 return new KafkaProducer<>(producerConfig, keySerializer, valueSerializer);
             }
         } catch (VcapEnvironmentException e) {
-            logger.error("Kafka configuration is not available.", e);
+            logger.error("Kafka configuration for observations is not available.", e);
         }
         logger.info("Kafka is not available. No data will be ingested into Kafka broker.");
         return null;
+    }
 
-
+    @Bean
+    public KafkaProducer<String, String> kafkaHearbeatProducer() throws VcapEnvironmentException {
+        try {
+            if (serviceConfigProvider.isKafkaEnabled()) {
+                Properties props = new Properties();
+                props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, serviceConfigProvider.getKafkaUri());
+                props.put(ProducerConfig.ACKS_CONFIG, "all");
+                props.put(ProducerConfig.RETRIES_CONFIG, 0);
+                props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+                props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+                return new KafkaProducer<String, String>(props);
+            }
+        } catch (VcapEnvironmentException e) {
+            logger.error("Kafka configuration for hearbeat is not available.", e);
+        }
+        return null;
     }
 }

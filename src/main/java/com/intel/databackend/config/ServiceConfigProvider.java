@@ -27,7 +27,11 @@ public interface ServiceConfigProvider {
 
     Boolean isKafkaEnabled() throws VcapEnvironmentException;
 
-    String getKafkaTopicName() throws VcapEnvironmentException;
+    String getKafkaObservationsTopicName() throws VcapEnvironmentException;
+
+    String getKafkaHeartbeatTopicName() throws VcapEnvironmentException;
+
+    Integer getKafkaHeartbeatInterval() throws VcapEnvironmentException;
 
     Integer getKafkaPartitionsFactor() throws VcapEnvironmentException;
 

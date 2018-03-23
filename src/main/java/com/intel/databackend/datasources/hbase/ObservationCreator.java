@@ -54,6 +54,7 @@ class ObservationCreator {
         this.result = result;
         addBasicInformation();
         addAdditionalInformation();
+        logger.error("========================Observation");
         return observation;
     }
 

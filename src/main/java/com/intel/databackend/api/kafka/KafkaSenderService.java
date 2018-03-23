@@ -61,23 +61,22 @@ public class KafkaSenderService implements KafkaService {
         if (kafkaProducer != null) {
             ZkClient zkClient = null;
             String brokerURI = null;
-	    ZkUtils zkUtils = null;
+            ZkUtils zkUtils = null;
             try {
-                topic = serviceConfigProvider.getKafkaTopicName();
+                topic = serviceConfigProvider.getKafkaObservationsTopicName();
                 Integer partitions = serviceConfigProvider.getKafkaPartitionsFactor();
                 Integer replicationFactor = serviceConfigProvider.getKafkaReplicationFactor();
                 Integer timeoutInMs = serviceConfigProvider.getKafkaTimeoutInMs();
                 brokerURI = serviceConfigProvider.getZookeeperUri();
                 zkClient = new ZkClient(brokerURI, timeoutInMs, timeoutInMs, ZKStringSerializer$.MODULE$);
-		// Security for Kafka was added in Kafka 0.9.0.0
-       		boolean isSecureKafkaCluster = false;
-       		// ZkUtils for Kafka was used in Kafka 0.9.0.0 for the AdminUtils API
-       		zkUtils = new ZkUtils(zkClient, new ZkConnection(brokerURI), isSecureKafkaCluster);
-
+                // Security for Kafka was added in Kafka 0.9.0.0
+                boolean isSecureKafkaCluster = false;
+           		// ZkUtils for Kafka was used in Kafka 0.9.0.0 for the AdminUtils API
+                zkUtils = new ZkUtils(zkClient, new ZkConnection(brokerURI), isSecureKafkaCluster);
 
                 if (!AdminUtils.topicExists(zkUtils, topic)) {
                     logger.error("Topic: {} does not exist. Creating...", topic);
-		    RackAwareMode rackAwareMode = Safe$.MODULE$;
+                    RackAwareMode rackAwareMode = Safe$.MODULE$;
                     AdminUtils.createTopic(zkUtils, topic, partitions, replicationFactor, new Properties(), rackAwareMode);
                 } else {
                     logger.info("Topic: {} exist and will be use for pushing messages", topic);

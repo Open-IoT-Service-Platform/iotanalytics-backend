@@ -44,7 +44,7 @@ public class ServiceConfigTest {
         Mockito.when(vcapReaderServices.getUserProvidedServiceCredentialsByName(ServiceConfig.KAFKA_UPS_NAME))
                 .thenReturn(new JSONObject("{" + ServiceConfig.KAFKA_UPS_TOPICS + ": " + "{" + ServiceConfig.KAFKA_OBSERVATIONS_TOPIC + ": " +topic + "} }"));
         serviceConfig.init();
-        Assert.assertEquals(serviceConfig.getKafkaTopicName(), topic);
+        Assert.assertEquals(serviceConfig.getKafkaObservationsTopicName(), topic);
     }
 
     @Test
