@@ -21,16 +21,16 @@ runjar:
 
 run:
 	gradle run
-	
+
 run_class_loader:
 	java -verbose:class -jar ./build/libs/databackend.jar | grep ServletContext
 
 build:
-	gradle build
+	gradle build --build-cache
 
 dist:
 	gradle distTar
-	
+
 clean:
 	gradle clean
 
