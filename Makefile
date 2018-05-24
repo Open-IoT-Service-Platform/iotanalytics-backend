@@ -26,7 +26,7 @@ run_class_loader:
 	java -verbose:class -jar ./build/libs/databackend.jar | grep ServletContext
 
 build:
-	gradle build --build-cache
+	gradle build
 
 dist:
 	gradle distTar
