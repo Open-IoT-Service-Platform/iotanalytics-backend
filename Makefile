@@ -21,7 +21,7 @@ runjar:
 
 run:
 	gradle run
-	
+
 run_class_loader:
 	java -verbose:class -jar ./build/libs/databackend.jar | grep ServletContext
 
@@ -30,7 +30,7 @@ build:
 
 dist:
 	gradle distTar
-	
+
 clean:
 	gradle clean
 
