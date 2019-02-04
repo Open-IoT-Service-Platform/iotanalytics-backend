@@ -17,4 +17,8 @@ RUN apk add make
 COPY --from=0 /app /app
 RUN rm -rf /app/build/distributions
 WORKDIR /app
+
+RUN adduser -D appuser
+USER appuser
+
 EXPOSE 8080
