@@ -3,7 +3,6 @@ package com.oisp.databackend.monitor;
 import com.oisp.databackend.config.oisp.JaegerConfig;
 import com.oisp.databackend.config.oisp.OispConfig;
 import com.oisp.databackend.datasources.DataDaoImpl;
-import io.jaegertracing.internal.samplers.ProbabilisticSampler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,14 +40,13 @@ public class JaegerTracing {
         }
 
         io.jaegertracing.Configuration.SamplerConfiguration samplerConfiguration = new io.jaegertracing.Configuration.SamplerConfiguration();
-        if ("probabilistic".equals(config.getSamplerType())) {
-            samplerConfiguration.withType(ProbabilisticSampler.TYPE);
-        }
-        samplerConfiguration.withParam(config.getSamplerParam());
-        samplerConfiguration.withManagerHostPort(agentHost + ":" + config.getAgentPort());
+        samplerConfiguration.withParam(config.getSamplerParam()).withType(config.getSamplerType());
+
+        io.jaegertracing.Configuration.SenderConfiguration senderConfiguration = new io.jaegertracing.Configuration.SenderConfiguration();
+        senderConfiguration.withAgentHost(agentHost).withAgentPort(config.getAgentPort());
 
         io.jaegertracing.Configuration.ReporterConfiguration reporterConfiguration = new io.jaegertracing.Configuration.ReporterConfiguration();
-        reporterConfiguration.withLogSpans(config.isLogSpans());
+        reporterConfiguration.withLogSpans(config.isLogSpans()).withSender(senderConfiguration);
 
         logger.info("Initializing tracer to host " + agentHost);
         return new io.jaegertracing.Configuration(config.getServiceName())
