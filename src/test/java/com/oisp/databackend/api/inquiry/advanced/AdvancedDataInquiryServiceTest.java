@@ -152,9 +152,10 @@ public class AdvancedDataInquiryServiceTest {
                 any(Long.class),
                 any(Long.class))).thenReturn(stringAttributes);
 
-        Mockito.when(dataDaoMock.count(any(String.class),
-                any(String.class),
-                any(String.class),
+        Mockito.when(dataDaoMock
+                .count(any(String.class),
+                any(new ArrayList<String>().getClass()),
+                any(new ArrayList<String>().getClass()),
                 any(Long.class),
                 any(Long.class),
                 any(Boolean.class),

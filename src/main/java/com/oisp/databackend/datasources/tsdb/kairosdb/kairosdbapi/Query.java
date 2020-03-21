@@ -56,9 +56,9 @@ public class Query {
         this.metrics.add(subQuery);
     }
 
-    /*public boolean isMsResolution() {
-        return msResolution;
-    }*/
+    public void addQueries(List<SubQuery> subQueries) {
+        this.metrics.addAll(subQueries);
+    }
 
     @Override
     public String toString() {

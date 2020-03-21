@@ -29,6 +29,8 @@ import com.oisp.databackend.datasources.tsdb.kairosdb.kairosdbapi.Sampling;
 import com.oisp.databackend.datasources.tsdb.kairosdb.kairosdbapi.SubQuery;
 
 import com.oisp.databackend.datastructures.Observation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -43,8 +45,10 @@ import java.util.stream.Stream;
 @Repository
 public class TsdbAccessKairosDb implements TsdbAccess {
 
+    private static final Logger logger = LoggerFactory.getLogger(TsdbAccessKairosDb.class);
     private static final String STAR = "*";
     private static final Long MAX_YEARS_COUNT_AGGREGATION = 10L; //max count over 10 years
+    private static final Long MAX_NUMBER_OF_SAMPLES = 60L * 60 * 24 * 365 * 10; // 10 years of 1Hz samples
     private RestApi api;
     @Autowired
     private OispConfig oispConfig;
@@ -130,41 +134,42 @@ public class TsdbAccessKairosDb implements TsdbAccess {
 
     @Override
     public Long count(TsdbQuery tsdbQuery) {
-        SubQuery subQuery = new SubQuery()
-                .withAggregator(new Aggregator(Aggregator.AGGREGATOR_COUNT)
+
+        List<SubQuery> subQueries = tsdbQuery
+                .getCids()
+                .stream()
+                .map(item -> new SubQuery()
+                    .withAggregator(new Aggregator(Aggregator.AGGREGATOR_COUNT)
                         .withSampling(new Sampling(MAX_YEARS_COUNT_AGGREGATION, "years")))
-                .withMetric(DataFormatter.createMetric(tsdbQuery.getAid(),
-                        tsdbQuery.getCid()));
+                    .withMetric(DataFormatter.createMetric(tsdbQuery.getAid(),
+                        item))).collect(Collectors.toList());
 
 
         // Tag list contains at least "type = value" to count only "true" values (and e.g. not gps coordinates)
         // When more attributes are given, only the samples additionally containing the attribute are count.
         // e.g. when sample1 has attribute(key1=value1) and sample2 (key2=value2) and sample3 (key2=value3) then if key2
         // is given only sample2 and sample3 are considered
-        List<String> tags = new ArrayList<String>();
+        Set<String> tags = new HashSet<String>();
         tags.add(TsdbObjectBuilder.VALUE);
 
-        if (!tsdbQuery.getAttributes().isEmpty() && tsdbQuery.getAttributes().get(0).equals(STAR)) {
-            tags = Stream.of(tags, tsdbQuery.getAttributes()).flatMap(x -> x.stream()).collect(Collectors.toList());
+        for (SubQuery subquery : subQueries) {
+            Set<String> tagSet = new HashSet<String>(tsdbQuery.getAttributes());
+            tags.addAll(tagSet);
         }
 
-        subQuery.withTag(TsdbObjectBuilder.TYPE, tags);
         Query query = new Query()
                 .withStart(tsdbQuery.getStart())
                 .withEnd(tsdbQuery.getStop());
-        query.addQuery(subQuery);
-
+        query.addQueries(subQueries);
         QueryResponse queryResponses = api.query(query);
         if (queryResponses == null) {
             return 0L;
         }
-        Long count = queryResponses.getQueries().stream()
+        return queryResponses.getQueries().stream()
                 .flatMap(x -> x.getResults().stream())
                 .flatMap(qr -> qr.getValues().stream())
-                .map(obj -> new Long((Integer) obj[1]))
+                .map(obj -> Long.valueOf((Integer) obj[1]))
                 .reduce(0L, (e1, e2) -> e1 + e2);
-        return count;
-        //return 0L;
     }
     
     public String[] scanForAttributeNames(TsdbQuery tsdbQuery) throws IOException {

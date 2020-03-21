@@ -157,9 +157,7 @@ public class DataDaoImpl implements DataDao {
                 .withAttributes(attributeList)
                 .withStart(start)
                 .withStop(stop);
-        Observation[] observations = tsdbAccess.scan(tsdbQuery, forward, limit);
-        //addLocToObservations(observations, gps);
-        return observations;
+        return tsdbAccess.scan(tsdbQuery, forward, limit);
     }
 
     @Override
@@ -171,14 +169,7 @@ public class DataDaoImpl implements DataDao {
                 .withCid(componentId)
                 .withStart(start)
                 .withStop(stop);
-        String[] attributesArray = tsdbAccess.scanForAttributeNames(tsdbQuery);
-
-        //Remove locX, locY, locZ attributes as these will be processed only when requested by location flag
-        /*String[] filteredAttr = Arrays.stream(attributesArray).filter((String s) ->
-                !s.equals(DataFormatter.gpsValueToString(0))
-                        && !s.equals(DataFormatter.gpsValueToString(1))
-                        && !s.equals(DataFormatter.gpsValueToString(2))).toArray(String[]::new);*/
-        return attributesArray;
+        return tsdbAccess.scanForAttributeNames(tsdbQuery);
     }
 
     @Override
@@ -195,11 +186,11 @@ public class DataDaoImpl implements DataDao {
     }
 
     @Override
-    public Long count(String accountId, String componentId, String componentType, long start, long stop, Boolean gps, String[] attributes) {
+    public Long count(String accountId, List<String> componentIds, List<String> componentTypes, long start, long stop, Boolean gps, String[] attributes) {
         TsdbQuery tsdbQuery = new TsdbQuery()
                 .withAid(accountId)
-                .withCid(componentId)
-                .withComponentType(componentType)
+                .withCids(componentIds)
+                .withComponentTypes(componentTypes)
                 .withLocationInfo(gps)
                 .withAttributes(attributes)
                 .withStart(start)

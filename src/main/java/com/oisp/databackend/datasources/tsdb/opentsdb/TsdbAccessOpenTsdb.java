@@ -125,11 +125,10 @@ public class TsdbAccessOpenTsdb implements TsdbAccess {
         if (queryResponses == null) {
             return 0L;
         }
-        Long count = Arrays.stream(queryResponses).
+        return Arrays.stream(queryResponses).
                 map(qr -> qr.getDps().values()).
-                flatMap(num -> num.stream().map(x -> new Long(Math.round(Float.parseFloat(x))))).
+                flatMap(num -> num.stream().map(x -> Long.valueOf(Math.round(Float.parseFloat(x))))).
                 reduce(0L, (e1, e2) -> e1 + e2);
-        return count;
     }
 
 

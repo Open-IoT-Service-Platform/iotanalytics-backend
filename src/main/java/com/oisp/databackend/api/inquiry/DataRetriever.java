@@ -24,9 +24,7 @@ import com.oisp.databackend.exceptions.IllegalDataInquiryArgumentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class DataRetriever {
 
@@ -75,22 +73,25 @@ public class DataRetriever {
     }
 
     public void countOnly(ObservationFilterSelector filter) throws IllegalDataInquiryArgumentException {
-        Collection<String> components = dataRetrieveParams.getComponentsMetadata().keySet();
+
+        List<String> components = new ArrayList<>(dataRetrieveParams.getComponentsMetadata().keySet());
+        List<String> componentTypes = new ArrayList<>();
         rowCount = 0L;
         for (String component : components) {
             if (dataRetrieveParams.getComponentsMetadata().get((String) component) == null
                     || !dataRetrieveParams.getComponentsMetadata().get((String) component).isValidType()) {
                 throw new IllegalDataInquiryArgumentException(errINVCOMPTYPE);
             }
-            Long count = hbase.count(dataRetrieveParams.getAccountId(),
-                    component,
-                    dataRetrieveParams.getComponentsMetadata().get((String) component).getDataType(),
-                    dataRetrieveParams.getStartDate(),
-                    dataRetrieveParams.getEndDate(),
-                    dataRetrieveParams.isQueryMeasureLocation(),
-                    dataRetrieveParams.getComponentsAttributes());
-            updateRowCountOnly(count);
+            componentTypes.add(dataRetrieveParams.getComponentsMetadata().get((String) component).getDataType());
         }
+        Long count = hbase.count(dataRetrieveParams.getAccountId(),
+                components,
+                componentTypes,
+                dataRetrieveParams.getStartDate(),
+                dataRetrieveParams.getEndDate(),
+                dataRetrieveParams.isQueryMeasureLocation(),
+                dataRetrieveParams.getComponentsAttributes());
+        updateRowCountOnly(count);
         this.componentObservations = null;
     }
 

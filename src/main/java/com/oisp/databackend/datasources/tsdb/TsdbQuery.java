@@ -6,10 +6,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@SuppressWarnings("PMD.TooManyMethods")
 public class TsdbQuery {
     private String aid;
-    private String cid;
-    private String componentType;
+    private List<String> cid;
+    private List<String> componentTypes;
     private List<String>  attributes;
     private boolean locationInfo;
     private long start;
@@ -18,8 +19,18 @@ public class TsdbQuery {
 
     public TsdbQuery(String aid, String cid, List<String> attributes, boolean locationInfo, long start, long stop) {
         this.aid = aid;
-        this.cid = cid;
-        this.componentType = null;
+        this.cid = Arrays.asList(cid);
+        this.componentTypes = new ArrayList<>();
+        this.attributes = attributes;
+        this.locationInfo = locationInfo;
+        this.start = start;
+        this.stop = stop;
+        this.aggregation = Aggregation.Type.NONE;
+    }
+    public TsdbQuery(String aid, List<String> cids, List<String> attributes, boolean locationInfo, long start, long stop) {
+        this.aid = aid;
+        this.cid = cids;
+        this.componentTypes = new ArrayList<>();
         this.attributes = attributes;
         this.locationInfo = locationInfo;
         this.start = start;
@@ -29,8 +40,9 @@ public class TsdbQuery {
 
     public TsdbQuery() {
         this.locationInfo = false;
-        this.componentType = null;
+        this.componentTypes = new ArrayList<>();
         this.attributes = new ArrayList<>();
+        this.cid = new ArrayList<>();
     }
 
     public TsdbQuery withAid(String aid) {
@@ -39,13 +51,31 @@ public class TsdbQuery {
     }
 
     public TsdbQuery withCid(String cid) {
-        this.cid = cid;
+        this.cid.add(cid);
+        return this;
+    }
+
+    public TsdbQuery withCids(List<String> cids) {
+        this.cid = cids;
         return this;
     }
 
     public TsdbQuery withComponentType(String componentType) {
-        this.componentType = componentType;
+        this.componentTypes.add(componentType);
         return this;
+    }
+
+    public TsdbQuery withComponentTypes(List<String> componentTypes) {
+        this.componentTypes = componentTypes;
+        return this;
+    }
+
+    public List<String> getComponentTypes() {
+        return componentTypes;
+    }
+
+    public void setComponentTypes(List<String> componentTypes) {
+        this.componentTypes = componentTypes;
     }
 
     public TsdbQuery withAttributes(List<String> attributes) {
@@ -87,7 +117,7 @@ public class TsdbQuery {
     }
 
     public void setCid(String cid) {
-        this.cid = cid;
+        this.cid.add(cid);
     }
 
     public void setAttributes(List<String> attributes) {
@@ -112,6 +142,9 @@ public class TsdbQuery {
     }
 
     public String getCid() {
+        return cid.get(0);
+    }
+    public List<String> getCids() {
         return cid;
     }
 
@@ -132,11 +165,11 @@ public class TsdbQuery {
     }
 
     public String getComponentType() {
-        return componentType;
+        return componentTypes.get(0);
     }
 
     public void setComponentType(String componentType) {
-        this.componentType = componentType;
+        this.componentTypes.add(componentType);
     }
 
     public Aggregation.Type getAggregation() {

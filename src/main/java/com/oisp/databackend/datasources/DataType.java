@@ -7,7 +7,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public final class DataType {
-    public static enum Types {
+    public enum Types {
         Boolean,
         Number,
         String,

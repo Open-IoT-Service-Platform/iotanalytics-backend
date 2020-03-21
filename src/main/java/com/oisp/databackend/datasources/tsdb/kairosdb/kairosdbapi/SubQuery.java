@@ -12,11 +12,11 @@ import java.util.Map;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SubQuery {
 
-    public static final Integer MAX_NUMBER_OF_SAMPLES = 1024 * 10;
+    public static final Long MAX_NUMBER_OF_SAMPLES = 1024L * 10;
 
     private List<Aggregator> aggregators;
     private String name;
-    private Integer limit;
+    private Long limit;
     private Map<String, List<String>> tags;
     private List<GroupBy> groupBy;
 
@@ -59,11 +59,11 @@ public class SubQuery {
         return this;
     }
 
-    public Integer getLimit() {
+    public Long getLimit() {
         return limit;
     }
 
-    public void setLimit(Integer limit) {
+    public void setLimit(Long limit) {
         this.limit = limit;
     }
 
