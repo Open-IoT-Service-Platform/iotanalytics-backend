@@ -47,7 +47,7 @@ apply plugin: 'checkstyle'
 apply plugin: 'pmd'
 
 checkstyle {
-    toolVersion = "6.1.1"
+    toolVersion = "6.4"
     configFile = rootProject.file('checkstyle/checkstyle.xml')
     sourceSets = [sourceSets.main]
 }

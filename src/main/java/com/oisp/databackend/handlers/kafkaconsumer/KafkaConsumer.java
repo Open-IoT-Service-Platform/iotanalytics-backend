@@ -1,7 +1,6 @@
 package com.oisp.databackend.handlers.kafkaconsumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.oisp.databackend.config.oisp.OispConfig;
 import com.oisp.databackend.datasources.DataDao;
 import com.oisp.databackend.datastructures.Observation;
@@ -16,28 +15,26 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.config.KafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.listener.ErrorHandler;
+import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ListenerExecutionFailedException;
-import org.springframework.kafka.listener.SeekToCurrentErrorHandler;
-import org.springframework.retry.backoff.ExponentialRandomBackOffPolicy;
-import org.springframework.retry.policy.SimpleRetryPolicy;
-import org.springframework.retry.support.RetryTemplate;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
-import java.util.Map;
 import java.util.HashMap;
-
+import java.util.List;
+import java.util.Map;
 
 @EnableKafka
 @Configuration
 public class KafkaConsumer {
 
     private static final Logger logger = LoggerFactory.getLogger(KafkaConsumer.class);
-    private static final int MAX_ATTEMPTS = 3;
-    private static final int MAX_FAILURES = 3;
+    private final String maxpolls = "1000";
     @Autowired
     private KafkaConsumerProperties kafkaConsumerProperties;
     @Autowired
@@ -71,7 +68,7 @@ public class KafkaConsumer {
     }
 
     @Bean
-    public ConsumerFactory<String, String> consumerFactory() {
+    public ConsumerFactory<Integer, String> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(
                 ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
@@ -91,52 +88,61 @@ public class KafkaConsumer {
         props.put(
                 ConsumerConfig.FETCH_MAX_BYTES_CONFIG,
                 oispConfig.getBackendConfig().getKafkaConfig().getMaxPayloadSize());
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxpolls);
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
         return new DefaultKafkaConsumerFactory<>(props);
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
+    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<Integer,
+            String>> kafkaListenerContainerFactory() {
 
-        ConcurrentKafkaListenerContainerFactory<String, String> factory =
-                new ConcurrentKafkaListenerContainerFactory<String, String>();
+        ConcurrentKafkaListenerContainerFactory<Integer, String> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
-        factory.setStatefulRetry(true);
-        RetryTemplate retryTemplate = new RetryTemplate();
-        retryTemplate.setBackOffPolicy(new ExponentialRandomBackOffPolicy());
-        retryTemplate.setThrowLastExceptionOnExhausted(true);
-        retryTemplate.setRetryPolicy(new SimpleRetryPolicy(MAX_ATTEMPTS));
-        factory.setRetryTemplate(retryTemplate);
+        factory.setBatchListener(true);
+
         return factory;
     }
 
-
-    @Bean
-    public ErrorHandler seekToCurrentErrorHandler() {
-        SeekToCurrentErrorHandler seekToCurrentErrorHandler = new SeekToCurrentErrorHandler(MAX_FAILURES);
-        seekToCurrentErrorHandler.setCommitRecovered(true);
-        return seekToCurrentErrorHandler;
-    }
-
     @KafkaListener(topics = "#{kafkaConsumerProperties.getTopic()}")
-    public void receive(String rawObservations) throws IOException, ServiceException {
+    public void receive(List<String> rawObservationList) throws IOException, ServiceException {
+        logger.debug("Start processing kafka samples batch " + rawObservationList.size());
         ObjectMapper mapper = new ObjectMapper();
-        Observation[] observations = null;
-        try {
-            Observation observation = mapper.readValue(rawObservations, Observation.class);
-            observations = new Observation[]{observation};
-            if ("ByteArray".equals(observation.getDataType())) {
-                observation.setbValue(Base64.getDecoder().decode(observation.getValue()));
-                observation.setValue("0");
-            }
-        } catch (IllegalArgumentException | ListenerExecutionFailedException | MismatchedInputException e) {
-            logger.debug("Tried to parse single observation. Now trying array: " + e);
-            observations = mapper.readValue(rawObservations, Observation[].class);
-        }
-        logger.info("Received Observations in topic " + kafkaConsumerProperties.getTopic()
-                + ". Message: " + observations.toString());
-        if (!dataDao.put(observations)) {
+        //String rawObservations = rawObservationList.get(0);
+        List<Observation> observationList = new ArrayList<>();
+
+        rawObservationList.forEach(rawObservation -> {
+                Observation[] observations = null;
+                if (rawObservation.trim().startsWith("[")) {
+                    try {
+                        observations = mapper.readValue(rawObservation, Observation[].class);
+                    } catch (IllegalArgumentException | ListenerExecutionFailedException
+                            | com.fasterxml.jackson.core.JsonProcessingException e) {
+                        logger.warn("Tried to parse array. Will ignore the sample: " + e);
+                    }
+                } else {
+                    try {
+                        Observation observation = mapper.readValue(rawObservation, Observation.class);
+                        observations = new Observation[]{observation};
+                        if ("ByteArray".equals(observation.getDataType())) {
+                            observation.setbValue(Base64.getDecoder().decode(observation.getValue()));
+                            observation.setValue("0");
+                        }
+                    } catch (IllegalArgumentException | ListenerExecutionFailedException
+                            | com.fasterxml.jackson.core.JsonProcessingException e) {
+                        logger.warn("Tried to parse single observation. Will ignore the sample " + e);
+                    }
+                }
+                if (observations != null) {
+                    logger.debug("Received Observations in topic " + kafkaConsumerProperties.getTopic()
+                            + ". Message: " + observations.toString());
+                    observationList.addAll(Arrays.asList(observations));
+                }
+            });
+        if (!dataDao.put(observationList.stream().toArray(Observation[]::new))) {
             throw new ServiceException("Data store error.");
         }
-
+        logger.debug("End processing kafka sample");
     }
 }
